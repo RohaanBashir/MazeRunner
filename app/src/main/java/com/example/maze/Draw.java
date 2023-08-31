@@ -26,7 +26,7 @@ public class Draw extends View {
     Paint paint1;
     Stack<Cell> stack;
     int rows,cols;
-    int w = 8;
+    int w = 50;
     Paint paint;
     Canvas canvas;
     ArrayList<Cell> grid;
