@@ -26,7 +26,7 @@ public class Draw extends View {
     Paint paint1;
     Stack<Cell> stack;
     int rows,cols;
-    int w = 50;
+    int w = 8;
     Paint paint;
     Canvas canvas;
     ArrayList<Cell> grid;
@@ -40,18 +40,6 @@ public class Draw extends View {
     boolean first = true;
 
 
-
-    public void startDraw(){
-
-        isDrawing = true;
-        handler.post(runnable);
-    }
-
-    public void StopDraw(){
-
-        isDrawing = false;
-        handler.removeCallbacks(runnable);
-    }
     public Draw(Context context, @Nullable AttributeSet attrs) {
 
         super(context, attrs);
