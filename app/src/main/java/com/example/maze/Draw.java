@@ -7,18 +7,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
-import java.util.logging.LogRecord;
-
-
 
 public class Draw extends View {
 
@@ -39,6 +34,11 @@ public class Draw extends View {
     boolean GridCreated = false;
     boolean first = true;
 
+    boolean SetCreated = false;
+
+    DisjointSet<Cell> set;
+    int counter = 0;
+    boolean Running = true;
 
     public Draw(Context context, @Nullable AttributeSet attrs) {
 
@@ -68,7 +68,6 @@ public class Draw extends View {
         if(!GridCreated){
             cols = getWidth()/w;
             rows = getHeight()/w;
-
             System.out.println(cols+" "+rows);
 
             grid = new ArrayList<Cell>();
@@ -81,12 +80,56 @@ public class Draw extends View {
             }
             GridCreated = true;
         }
-
-        GenerateMaze();
-        postInvalidateDelayed(18);
+//        GenerateMazeRecursiveBacktrack();
+        GenerateMazeKruskal();
+        postInvalidateDelayed(50);
 
     }
-    public void GenerateMaze(){
+
+
+    public void GenerateMazeKruskal(){
+
+        //step1- Creating N-1 sets with each contain one cell
+
+        if(!SetCreated){
+            //Making sets of grid each set will contain only one cell
+            set = new DisjointSet<>();
+            for (int i = 0;i<grid.size();i++){
+                set.makeSet(grid.get(i));
+            }
+            System.out.println(set.itemsSize());
+            SetCreated = true;
+        }
+        //Step2-Getting random Cell and Random Neighbour
+
+
+        if(Running){
+            int index = RandomGridIndex();
+            Cell current = grid.get(index);
+            Cell next = current.checkNeighbours(); //return random Neighbour
+            canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
+
+            //Step3-join (Union) the Sets if they are district
+            if(set.find(current) != set.find(next)){
+                //remove wall
+                assert next != null;
+                RemoveWalls(current,next);
+                set.union(current,next);
+                counter++;
+            }
+
+        }
+        //Showing the grid
+        for (int i = 0;i<grid.size();i++){
+            grid.get(i).show();
+        }
+
+        if(counter == grid.size()-1){
+            Running = false;
+        }
+
+    }
+    public void GenerateMazeRecursiveBacktrack(){
 
         canvas.drawColor(Color.BLACK);
         //marking source visited
@@ -277,5 +320,12 @@ public class Draw extends View {
 
         }
 
+    }
+
+    private int RandomGridIndex(){
+
+        long seed = System.currentTimeMillis();
+        Random randomIndex = new Random(seed);
+        return randomIndex.nextInt(this.grid.size());
     }
 }
