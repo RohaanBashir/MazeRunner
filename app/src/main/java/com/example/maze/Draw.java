@@ -164,14 +164,10 @@ public class Draw extends View {
                 canvas.drawLine(x, y + w, x, y, paint);
             }
 
-            if(this.visited){
-
-//                Paint paint1 = new Paint();
-//                paint1.setColor(Color.GREEN);
-//                paint1.setStyle(Paint.Style.FILL);
+//           if(this.visited){
 //
-//                canvas.drawRect(x,y,w,w,paint1);
-            }
+//               canvas.drawRect(current.i*w,current.j*w,(current.i*w),(current.j*w),paint1);
+//          }
         }
 
         public Cell checkNeighbours(){
