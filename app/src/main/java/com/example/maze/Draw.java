@@ -18,6 +18,7 @@ import java.util.Stack;
 public class Draw extends View {
 
 
+    Boolean invalidate = false;
     Paint paint1;
     Stack<Cell> stack;
     int rows,cols;
@@ -44,7 +45,7 @@ public class Draw extends View {
 
         super(context, attrs);
         paint = new Paint();
-        paint.setColor(Color.RED);  // Set color to red
+        paint.setColor(Color.WHITE);  // Set color to red
         paint.setStyle(Paint.Style.STROKE);  // Set fill style
         paint.setStrokeWidth(6);  // Set stroke width
 
@@ -80,9 +81,12 @@ public class Draw extends View {
             }
             GridCreated = true;
         }
-//        GenerateMazeRecursiveBacktrack();
-        GenerateMazeKruskal();
-        postInvalidateDelayed(50);
+        GenerateMazeRecursiveBacktrack();
+        //GenerateMazeKruskal();
+
+        if(this.invalidate) {
+            postInvalidateDelayed(50);
+        }
 
     }
 
@@ -91,6 +95,7 @@ public class Draw extends View {
 
         //step1- Creating N-1 sets with each contain one cell
 
+        canvas.drawColor(Color.BLACK);
         if(!SetCreated){
             //Making sets of grid each set will contain only one cell
             set = new DisjointSet<>();
@@ -327,5 +332,32 @@ public class Draw extends View {
         long seed = System.currentTimeMillis();
         Random randomIndex = new Random(seed);
         return randomIndex.nextInt(this.grid.size());
+    }
+
+    public void StartDrawing(){
+        this.invalidate = true;
+        postInvalidateDelayed(50);
+
+    }
+
+    public void StopDrawing(){
+        this.invalidate = false;
+        postInvalidateDelayed(50);
+    }
+
+    public void Reset(){
+
+        //creating a new grid and assigning it to the current grid
+        ArrayList<Cell> newGrid = new ArrayList<Cell>();
+        for (int j = 0; j < rows; j++) {
+            for (int i = 0; i < cols; i++) {
+                Cell temp = new Cell(i, j);
+                newGrid.add(temp);
+            }
+        }
+
+        this.grid = newGrid; //copying the newGrid to actual grid
+        first = true;
+        postInvalidateDelayed(50);
     }
 }
