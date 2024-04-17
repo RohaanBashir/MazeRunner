@@ -8,22 +8,78 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btn;
+    Boolean pressed = false;
+    Button GenerateBtn;
+    Draw DrawView;
+    Button Stop;
+    Button Reset;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Draw draw = new Draw(this,null);
+        //button Ids
+        DrawView = findViewById(R.id.draw);
+        GenerateBtn = findViewById(R.id.button);
+        Stop = findViewById(R.id.Stop);
+        Reset = findViewById(R.id.Reset);
 
-        btn = findViewById(R.id.button);
 
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        GenerateBtn.setOnClickListener(v -> {
+            DrawView.StartDrawing();
+
+            //setting the visibility of the stop and reset buttons
+            Stop.setVisibility(View.VISIBLE);
+            Reset.setVisibility(View.VISIBLE);
+            Stop.setEnabled(true);
+            Reset.setEnabled(false);
+            Stop.setText("Stop");
+
+            GenerateBtn.setVisibility(View.INVISIBLE);
+            GenerateBtn.setEnabled(false);
+
+
+        });
+
+        Stop.setOnClickListener(view -> {
+
+            if(!pressed){
+                DrawView.StopDrawing();
+                this.pressed = true;
+                Stop.setText("Start");
+                Reset.setEnabled(true);
+
+
+            }else{
+
+                this.pressed = false;
+                Reset.setEnabled(false);
+                Stop.setText("Stop");
+                DrawView.StartDrawing();
+
 
             }
+
         });
+
+        Reset.setOnClickListener(view -> {
+
+            pressed = false;
+
+            DrawView.Reset();
+            GenerateBtn.setEnabled(true);
+            GenerateBtn.setVisibility(View.VISIBLE);
+
+            Reset.setEnabled(true);
+            Reset.setVisibility(View.INVISIBLE);
+
+            Stop.setEnabled(true);
+            Stop.setVisibility(View.INVISIBLE);
+
+
+        });
+
+
 
     }
 }
