@@ -8,6 +8,7 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
+    Button path;
     Boolean pressed = false;
     Button GenerateBtn;
     Draw DrawView;
@@ -23,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
         GenerateBtn = findViewById(R.id.button);
         Stop = findViewById(R.id.Stop);
         Reset = findViewById(R.id.Reset);
+        path = findViewById(R.id.path);
 
 
         GenerateBtn.setOnClickListener(v -> {
@@ -78,6 +80,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         });
+
+        path.setOnClickListener(v->{
+
+            DrawView.firstSearch = false;
+            DrawView.TriggerDFS();
+
+        });
+
+
 
 
 
