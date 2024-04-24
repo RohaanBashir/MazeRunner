@@ -22,7 +22,7 @@ public class Draw extends View {
     boolean DFSCompleted = false;
     boolean DFS = false;
     boolean firstSearch =  true;
-    int delay = 0;
+    long  delay = -999999999;
     Boolean DFSFirst = true;
     Paint pathPaint;
 
@@ -124,7 +124,7 @@ public class Draw extends View {
 
             canvas.drawRect(grid.get(0).i*w, grid.get(0).j*w,
                     (grid.get(0).i*w)+w, (grid.get(0).j*w)+w, paint1); // start cell
-            
+
         }
         for (int i = 0;i<grid.size();i++){
             grid.get(i).show();
