@@ -18,6 +18,14 @@ import java.util.Stack;
 public class Draw extends View {
 
 
+    int shrinkAmount = 10;
+    boolean DFSCompleted = false;
+    boolean DFS = false;
+    boolean firstSearch =  true;
+    long  delay = -999999999;
+    Boolean DFSFirst = true;
+    Paint pathPaint;
+
     Boolean invalidate = false;
     Paint paint1;
     Stack<Cell> stack;
@@ -44,6 +52,7 @@ public class Draw extends View {
     public Draw(Context context, @Nullable AttributeSet attrs) {
 
         super(context, attrs);
+
         paint = new Paint();
         paint.setColor(Color.WHITE);  // Set color to red
         paint.setStyle(Paint.Style.STROKE);  // Set fill style
@@ -56,6 +65,12 @@ public class Draw extends View {
         paint1.setStyle(Paint.Style.FILL);
         stack = new Stack<>();
 
+        pathPaint = new Paint();
+        pathPaint.setAntiAlias(true);
+        pathPaint.setStyle(Paint.Style.FILL);
+        pathPaint.setColor(Color.RED);
+
+
     }
 
 
@@ -66,10 +81,10 @@ public class Draw extends View {
         this.canvas = canvas; //dependency injection
 
 
-        if(!GridCreated){
-            cols = getWidth()/w;
-            rows = getHeight()/w;
-            System.out.println(cols+" "+rows);
+        if (!GridCreated) {
+            cols = getWidth() / w;
+            rows = getHeight() / w;
+            System.out.println(cols + " " + rows);
 
             grid = new ArrayList<Cell>();
 
@@ -81,16 +96,40 @@ public class Draw extends View {
             }
             GridCreated = true;
         }
-        GenerateMazeRecursiveBacktrack();
-        //GenerateMazeKruskal();
 
-        if(this.invalidate) {
-            postInvalidateDelayed(50);
+        if (firstSearch) {
+//          GenerateMazeRecursiveBacktrack();
+            GenerateMazeKruskal();
         }
+        if (DFS) {
+            this.DFS();
+        }
+//        if (this.invalidate) {
+//            postInvalidateDelayed(delay);
+//        }
+        if (DFSCompleted) {
+            for(Cell cell : stack){
 
+                // Draw path indicator on the cell
+                canvas.drawRect(
+                        cell.i * w + shrinkAmount, // Left
+                        cell.j * w + shrinkAmount, // Top
+                        (cell.i * w) + w - shrinkAmount, // Right
+                        (cell.j * w) + w - shrinkAmount, // Bottom
+                        pathPaint
+                );
+            }
+            canvas.drawRect(grid.get(grid.size()-1).i*w, grid.get(grid.size()-1).j*w, (grid.get(grid.size()-1).i*w)+w,
+                    (grid.get(grid.size()-1).j*w)+w, paint1);//last cell
+
+            canvas.drawRect(grid.get(0).i*w, grid.get(0).j*w,
+                    (grid.get(0).i*w)+w, (grid.get(0).j*w)+w, paint1); // start cell
+
+        }
+        for (int i = 0;i<grid.size();i++){
+            grid.get(i).show();
+        }
     }
-
-
     public void GenerateMazeKruskal(){
 
         //step1- Creating N-1 sets with each contain one cell
@@ -106,8 +145,6 @@ public class Draw extends View {
             SetCreated = true;
         }
         //Step2-Getting random Cell and Random Neighbour
-
-
         if(Running){
             int index = RandomGridIndex();
             Cell current = grid.get(index);
@@ -124,14 +161,10 @@ public class Draw extends View {
             }
 
         }
-        //Showing the grid
-        for (int i = 0;i<grid.size();i++){
-            grid.get(i).show();
-        }
-
         if(counter == grid.size()-1){
             Running = false;
         }
+        postInvalidateDelayed(delay);
 
     }
     public void GenerateMazeRecursiveBacktrack(){
@@ -157,10 +190,53 @@ public class Draw extends View {
             current = stack.pop();
         }
 
-        for (int i = 0;i<grid.size();i++){
-            grid.get(i).show();
-        }
+        postInvalidateDelayed(delay);
     }
+
+    public void TriggerDFS(){
+        DFS = true;
+    }
+    public boolean DFS(){
+
+        postInvalidateDelayed(delay);
+        if(DFSFirst){
+
+            //first marking every Node as non visited
+            for (int i = 0;i<grid.size();i++){
+                grid.get(i).visited = false;
+            }
+
+            //emptying the stack
+            while(!stack.isEmpty()){
+                stack.pop();
+            }
+
+            current=grid.get(0);
+            current.visited = true;
+            DFSFirst = false;
+        }
+        //getting next cell based upon if they don't have wall between current and next
+        Cell next = current.NonWalledNeighbours();
+
+        canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
+        if(next!=null){
+            stack.push(current);
+            next.visited = true;
+            current = next;
+        }
+        else if(!stack.isEmpty()){
+            current = stack.pop();
+        }
+        if (current == grid.get(grid.size()-1)) {
+
+            DFS = false;
+            DFSCompleted = true;
+            return true;
+        }
+
+        return false;
+    }
+
     private class Cell { //inner class
 
         boolean visited = false;
@@ -211,15 +287,52 @@ public class Draw extends View {
             if (wall[3]) {
                 canvas.drawLine(x, y + w, x, y, paint);
             }
+        }
 
-            if(this.visited){
+        @Nullable
+        private Cell NonWalledNeighbours(){
 
-//                Paint paint1 = new Paint();
-//                paint1.setColor(Color.GREEN);
-//                paint1.setStyle(Paint.Style.FILL);
-//
-//                canvas.drawRect(x,y,w,w,paint1);
+
+            //top Neighbour
+            try{
+                Cell top = grid.get(getIndex(i,j-1));
+                if(!top.visited && wall[0] == false){
+                    return top;
+                }
+            }catch (ArrayIndexOutOfBoundsException  ignored){
+
             }
+
+            //right Neighbour
+            try{
+                Cell right = grid.get(getIndex(i+1,j));
+                if(!right.visited && wall[1] == false){
+                    return right;
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+
+            }
+
+            //bottom Neighbour
+            try{
+                Cell bottom = grid.get(getIndex(i,j+1));
+                if(!bottom.visited && wall[2] == false){
+                    return bottom;
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+
+            }
+            //left Neighbour
+            try{
+
+                Cell left = grid.get(getIndex(i-1,j));
+                if(!left.visited && wall[3] == false){
+                    return left;
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+            }
+
+            return null;
         }
 
         public Cell checkNeighbours(){
@@ -336,16 +449,23 @@ public class Draw extends View {
 
     public void StartDrawing(){
         this.invalidate = true;
-        postInvalidateDelayed(50);
+        postInvalidateDelayed(delay);
 
     }
 
     public void StopDrawing(){
         this.invalidate = false;
-        postInvalidateDelayed(50);
+        postInvalidateDelayed(delay);
     }
 
     public void Reset(){
+
+
+        //emptying the stack
+
+        while(!this.stack.isEmpty()){
+            this.stack.pop();
+        }
 
         //creating a new grid and assigning it to the current grid
         ArrayList<Cell> newGrid = new ArrayList<Cell>();
@@ -358,6 +478,9 @@ public class Draw extends View {
 
         this.grid = newGrid; //copying the newGrid to actual grid
         first = true;
-        postInvalidateDelayed(50);
+        DFS = false;
+        firstSearch = true;
+
+        postInvalidateDelayed(delay);
     }
 }
