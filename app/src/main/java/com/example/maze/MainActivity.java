@@ -84,13 +84,9 @@ public class MainActivity extends AppCompatActivity {
         path.setOnClickListener(v->{
 
             DrawView.firstSearch = false;
-            DrawView.TriggerDFS();
+            DrawView.TriggerA_star();
 
         });
-
-
-
-
 
     }
 }
