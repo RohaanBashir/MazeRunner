@@ -12,6 +12,11 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Stack;
 
@@ -19,226 +24,403 @@ public class Draw extends View {
 
 
     int shrinkAmount = 10;
+
+    boolean BFSCompleted = false;
+    boolean BFSFirst = true;
+
+    Cell next;
+    boolean BFS = false;
+
+    List<Cell> neibourArray;
     boolean DFSCompleted = false;
     boolean DFS = false;
+    boolean A_star = false;
     boolean firstSearch =  true;
-    long  delay = -999999999;
+    long  delay = -99999999;
     Boolean DFSFirst = true;
     Paint pathPaint;
 
-    Boolean invalidate = false;
-    Paint paint1;
-    Stack<Cell> stack;
-    int rows,cols;
-    int w = 50;
-    Paint paint;
-    Canvas canvas;
-    ArrayList<Cell> grid;
-
-    boolean isDrawing = false;
-    Handler handler;
-    private Runnable runnable;
-    Cell current;
-
-    boolean GridCreated = false;
-    boolean first = true;
-
-    boolean SetCreated = false;
-
-    DisjointSet<Cell> set;
-    int counter = 0;
-    boolean Running = true;
+        Boolean invalidate = false;
+        Paint paint1;
+        Stack<Cell> stack;
+        Queue<Cell> queue;
+        int rows,cols;
+        int w = 50;
+        Paint paint;
+        Canvas canvas;
+        ArrayList<Cell> grid;
+        boolean isDrawing = false;
+        PriorityQueue<Node> openSet;
+        Handler handler;
+        private Runnable runnable;
+        Cell current;
+        boolean GridCreated = false;
+        boolean first = true;
+        boolean SetCreated = false;
+        DisjointSet<Cell> set;
+        int counter = 0;
+        boolean Running = true;
+        boolean A_starFirst = true;
+        int g = 0;
 
     public Draw(Context context, @Nullable AttributeSet attrs) {
 
-        super(context, attrs);
+            super(context, attrs);
 
-        paint = new Paint();
-        paint.setColor(Color.WHITE);  // Set color to red
-        paint.setStyle(Paint.Style.STROKE);  // Set fill style
-        paint.setStrokeWidth(6);  // Set stroke width
+            paint = new Paint();
+            paint.setColor(Color.WHITE);  // Set color to red
+            paint.setStyle(Paint.Style.STROKE);  // Set fill style
+            paint.setStrokeWidth(6);  // Set stroke width
 
-        handler = new Handler();
+            handler = new Handler();
 
-        paint1 = new Paint();
-        paint1.setColor(Color.GREEN);
-        paint1.setStyle(Paint.Style.FILL);
-        stack = new Stack<>();
+            paint1 = new Paint();
+            paint1.setColor(Color.GREEN);
+            paint1.setStyle(Paint.Style.FILL);
+            stack = new Stack<>();
+            queue = new LinkedList<>();
 
-        pathPaint = new Paint();
-        pathPaint.setAntiAlias(true);
-        pathPaint.setStyle(Paint.Style.FILL);
-        pathPaint.setColor(Color.RED);
+            neibourArray = new ArrayList<>();
 
+            pathPaint = new Paint();
+            pathPaint.setAntiAlias(true);
+            pathPaint.setStyle(Paint.Style.FILL);
+            pathPaint.setColor(Color.RED);
 
-    }
-
-
-    @SuppressLint("DrawAllocation")
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        this.canvas = canvas; //dependency injection
+            openSet = new PriorityQueue<>();
 
 
-        if (!GridCreated) {
-            cols = getWidth() / w;
-            rows = getHeight() / w;
-            System.out.println(cols + " " + rows);
+        }
 
-            grid = new ArrayList<Cell>();
 
-            for (int j = 0; j < rows; j++) {
-                for (int i = 0; i < cols; i++) {
-                    Cell temp = new Cell(i, j);
-                    grid.add(temp);
+        @SuppressLint("DrawAllocation")
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            this.canvas = canvas; //dependency injection
+
+
+            if (!GridCreated) {
+                cols = getWidth() / w;
+                rows = getHeight() / w;
+                System.out.println(cols + " " + rows);
+
+                grid = new ArrayList<Cell>();
+
+                for (int j = 0; j < rows; j++) {
+                    for (int i = 0; i < cols; i++) {
+                        Cell temp = new Cell(i, j);
+                        grid.add(temp);
+                    }
                 }
+                GridCreated = true;
             }
-            GridCreated = true;
-        }
 
-        if (firstSearch) {
+            if (firstSearch) {
 //          GenerateMazeRecursiveBacktrack();
-            GenerateMazeKruskal();
-        }
-        if (DFS) {
-            this.DFS();
-        }
+                GenerateMazeKruskal();
+            }
+            if (DFS) {
+                this.DFS();
+            }
+
+            if(BFS){
+                this.BFS();
+            }
+            if(A_star){
+                this.A_star();
+            }
+
 //        if (this.invalidate) {
 //            postInvalidateDelayed(delay);
 //        }
-        if (DFSCompleted) {
-            for(Cell cell : stack){
+            if (DFSCompleted) {
+                for(Cell cell : stack){
 
-                // Draw path indicator on the cell
+                    // Draw path indicator on the cell
+                    canvas.drawRect(
+                            cell.i * w + shrinkAmount, // Left
+                            cell.j * w + shrinkAmount, // Top
+                            (cell.i * w) + w - shrinkAmount, // Right
+                            (cell.j * w) + w - shrinkAmount, // Bottom
+                            pathPaint
+                    );
+                }
+                canvas.drawRect(grid.get(grid.size()-1).i*w, grid.get(grid.size()-1).j*w, (grid.get(grid.size()-1).i*w)+w,
+                        (grid.get(grid.size()-1).j*w)+w, paint1);//last cell
+
+                canvas.drawRect(grid.get(0).i*w, grid.get(0).j*w,
+                        (grid.get(0).i*w)+w, (grid.get(0).j*w)+w, paint1); // start cell
+
+            }
+            for (int i = 0;i<grid.size();i++){
+                grid.get(i).show();
+            }
+        }
+        public void GenerateMazeKruskal(){
+
+            //step1- Creating N-1 sets with each contain one cell
+
+            canvas.drawColor(Color.BLACK);
+            if(!SetCreated){
+                //Making sets of grid each set will contain only one cell
+                set = new DisjointSet<>();
+                for (int i = 0;i<grid.size();i++){
+                    set.makeSet(grid.get(i));
+                }
+                System.out.println(set.itemsSize());
+                SetCreated = true;
+            }
+            //Step2-Getting random Cell and Random Neighbour
+            if(Running){
+                int index = RandomGridIndex();
+                Cell current = grid.get(index);
+                Cell next = current.checkNeighbours(); //return random Neighbour
+                canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
+
+                //Step3-join (Union) the Sets if they are district
+                if(set.find(current) != set.find(next)){
+                    //remove wall
+                    assert next != null;
+                    RemoveWalls(current,next);
+                    set.union(current,next);
+                    counter++;
+                }
+
+            }
+            if(counter == grid.size()-1){
+                Running = false;
+            }
+            postInvalidateDelayed(delay);
+
+        }
+        public void GenerateMazeRecursiveBacktrack(){
+
+            canvas.drawColor(Color.BLACK);
+            //marking source visited
+            if(first){
+                this.canvas.drawColor(Color.BLACK);
+                current=grid.get(0);
+                current.visited = true;
+                first = false;
+            }
+            //getting the next node
+            Cell next = current.checkNeighbours(); //returns a random Neighbour
+            canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
+            if(next!=null){
+                stack.push(current);
+                RemoveWalls(current,next);
+                next.visited = true;
+                current = next;
+            }
+            else if(!stack.isEmpty()){
+                current = stack.pop();
+            }
+
+            postInvalidateDelayed(delay);
+        }
+
+        public void TriggerDFS(){
+            DFS = true;
+        }
+
+        public void TriggerBFS(){
+            BFS = true;
+        }
+        public boolean DFS(){
+
+            postInvalidateDelayed(delay);
+            if(DFSFirst){
+
+                //first marking every Node as non visited
+                for (int i = 0;i<grid.size();i++){
+                    grid.get(i).visited = false;
+                }
+                //emptying the stack
+                while(!stack.isEmpty()){
+                    stack.pop();
+                }
+                current=grid.get(0);
+                current.visited = true;
+                DFSFirst = false;
+            }
+            //getting next cell based upon if they don't have wall between current and next
+            Cell next = current.NonWalledNeighbours();
+
+            canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
+            if(next!=null){
+                stack.push(current);
+                next.visited = true;
+                current = next;
+            }
+            else if(!stack.isEmpty()){
+                current = stack.pop();
+            }
+            if (current == grid.get(grid.size()-1)) {
+
+                DFS = false;
+                DFSCompleted = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private boolean BFS() {
+            if (BFSFirst) {
+                // Making all nodes not visited and clearing the stack
+                for (int i = 0; i < grid.size(); i++) {
+                    grid.get(i).visited = false;
+                    grid.get(i).parent = null;
+                }
+                while (!stack.isEmpty()) {
+                    stack.pop();
+                }
+
+                current = grid.get(0);
+                current.visited = true;
+                queue.add(current);
+                BFSFirst = false;
+            }
+
+            if (queue.isEmpty()) {
+                BFS = false;
+                return true;
+            }
+
+            current = queue.poll();
+            stack.push(current);
+
+            if (current == grid.get(grid.size() - 1)) {
+                // Goal cell found, trace back the path
+                traceBackPath();
+                return true;
+            }
+
+            for (Cell neighbor : current.NonWalledNeighboursArray()) {
+                if (!neighbor.visited) {
+                    neighbor.visited = true;
+                    neighbor.parent = current; // Set the parent cell
+                    queue.add(neighbor);
+                }
                 canvas.drawRect(
-                        cell.i * w + shrinkAmount, // Left
-                        cell.j * w + shrinkAmount, // Top
-                        (cell.i * w) + w - shrinkAmount, // Right
-                        (cell.j * w) + w - shrinkAmount, // Bottom
+                        neighbor.i * w + shrinkAmount, // Left
+                        neighbor.j * w + shrinkAmount, // Top
+                        (neighbor.i * w) + w - shrinkAmount, // Right
+                        (neighbor.j * w) + w - shrinkAmount, // Bottom
                         pathPaint
                 );
             }
+
+            postInvalidateDelayed(delay);
+            return true;
+        }
+
+    private void drawCurrentPath(Canvas canvas, Cell current) {
+        Paint currentPathPaint = new Paint();
+        currentPathPaint.setColor(Color.YELLOW); // Color for the current path
+        currentPathPaint.setStyle(Paint.Style.FILL);
+
+        Cell temp = current;
+        while (temp != null) {
+            canvas.drawRect(
+                    temp.i * w + shrinkAmount, // Left
+                    temp.j * w + shrinkAmount, // Top
+                    (temp.i * w) + w - shrinkAmount, // Right
+                    (temp.j * w) + w - shrinkAmount, // Bottom
+                    currentPathPaint // Paint for the current path
+            );
+            temp = temp.parent;
+        }
+    }
+
+        void TriggerA_star(){
+            A_star = true;
+        }
+        public boolean A_star(){
+            if(A_starFirst){
+                g = 0;
+                current = this.grid.get(0);
+                current.f = 0;
+                current.g = g;
+                current.h = heuristic(current);
+                openSet.add(new Node(this.grid.get(0)));
+                A_starFirst = false;
+            }
+
+            current = openSet.poll().getCell();
+            g = current.g;
+
+            if(current == this.grid.get(this.grid.size()-1)){
+                traceBackPath();
+                return true;
+            }
+
+            current.visited = true;
+            canvas.drawRect(
+                    current.i * w + shrinkAmount, // Left
+                    current.j * w + shrinkAmount, // Top
+                    (current.i * w) + w - shrinkAmount, // Right
+                    (current.j * w) + w - shrinkAmount, // Bottom
+                    pathPaint // Paint for visited cells
+            );
+
+            // Draw the current path from the current node to the start node
+            drawCurrentPath(canvas, current);
+
+            for (Cell neighbour : current.NonWalledNeighboursArrayAStar()){
+                int temp_g_score = g+1;
+                int temp_h_score = heuristic(neighbour);
+                int temp_f_score = temp_g_score+temp_h_score;
+
+                if(temp_f_score < neighbour.f){
+                    neighbour.g = temp_g_score;
+                    neighbour.h = temp_h_score;
+                    neighbour.f = temp_f_score;
+                    neighbour.parent = current; // Set the parent cell
+                    openSet.add(new Node(neighbour));
+                }
+                canvas.drawRect(
+                        neighbour.i * w + shrinkAmount, // Left
+                        neighbour.j * w + shrinkAmount, // Top
+                        (neighbour.i * w) + w - shrinkAmount, // Right
+                        (neighbour.j * w) + w - shrinkAmount, // Bottom
+                        pathPaint
+                );
+
+            }
+
+            postInvalidateDelayed(50);
+        return true;
+    }
+    private int heuristic(Cell a) {
+        return Math.abs(a.i - this.grid.get(grid.size()-1).i) + Math.abs(a.j - this.grid.get(grid.size()-1).j);
+    }
+
+    private void traceBackPath() {
+        Cell currentCell = grid.get(grid.size() - 1); // Goal cell
+        while (currentCell.parent != null) {
+            // Mark path from goal to start
+            canvas.drawRect(
+                    currentCell.i * w + shrinkAmount,
+                    currentCell.j * w + shrinkAmount,
+                    (currentCell.i * w) + w - shrinkAmount,
+                    (currentCell.j * w) + w - shrinkAmount,
+                    pathPaint
+            );
+            currentCell = currentCell.parent; // Move to parent cell
             canvas.drawRect(grid.get(grid.size()-1).i*w, grid.get(grid.size()-1).j*w, (grid.get(grid.size()-1).i*w)+w,
                     (grid.get(grid.size()-1).j*w)+w, paint1);//last cell
 
             canvas.drawRect(grid.get(0).i*w, grid.get(0).j*w,
                     (grid.get(0).i*w)+w, (grid.get(0).j*w)+w, paint1); // start cell
-
-        }
-        for (int i = 0;i<grid.size();i++){
-            grid.get(i).show();
         }
     }
-    public void GenerateMazeKruskal(){
+    class Cell { //inner class
 
-        //step1- Creating N-1 sets with each contain one cell
-
-        canvas.drawColor(Color.BLACK);
-        if(!SetCreated){
-            //Making sets of grid each set will contain only one cell
-            set = new DisjointSet<>();
-            for (int i = 0;i<grid.size();i++){
-                set.makeSet(grid.get(i));
-            }
-            System.out.println(set.itemsSize());
-            SetCreated = true;
-        }
-        //Step2-Getting random Cell and Random Neighbour
-        if(Running){
-            int index = RandomGridIndex();
-            Cell current = grid.get(index);
-            Cell next = current.checkNeighbours(); //return random Neighbour
-            canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
-
-            //Step3-join (Union) the Sets if they are district
-            if(set.find(current) != set.find(next)){
-                //remove wall
-                assert next != null;
-                RemoveWalls(current,next);
-                set.union(current,next);
-                counter++;
-            }
-
-        }
-        if(counter == grid.size()-1){
-            Running = false;
-        }
-        postInvalidateDelayed(delay);
-
-    }
-    public void GenerateMazeRecursiveBacktrack(){
-
-        canvas.drawColor(Color.BLACK);
-        //marking source visited
-        if(first){
-            this.canvas.drawColor(Color.BLACK);
-            current=grid.get(0);
-            current.visited = true;
-            first = false;
-        }
-        //getting the next node
-        Cell next = current.checkNeighbours(); //returns a random Neighbour
-        canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
-        if(next!=null){
-            stack.push(current);
-            RemoveWalls(current,next);
-            next.visited = true;
-            current = next;
-        }
-        else if(!stack.isEmpty()){
-            current = stack.pop();
-        }
-
-        postInvalidateDelayed(delay);
-    }
-
-    public void TriggerDFS(){
-        DFS = true;
-    }
-    public boolean DFS(){
-
-        postInvalidateDelayed(delay);
-        if(DFSFirst){
-
-            //first marking every Node as non visited
-            for (int i = 0;i<grid.size();i++){
-                grid.get(i).visited = false;
-            }
-
-            //emptying the stack
-            while(!stack.isEmpty()){
-                stack.pop();
-            }
-
-            current=grid.get(0);
-            current.visited = true;
-            DFSFirst = false;
-        }
-        //getting next cell based upon if they don't have wall between current and next
-        Cell next = current.NonWalledNeighbours();
-
-        canvas.drawRect(current.i*w,current.j*w,(current.i*w)+w,(current.j*w)+w,paint1);
-        if(next!=null){
-            stack.push(current);
-            next.visited = true;
-            current = next;
-        }
-        else if(!stack.isEmpty()){
-            current = stack.pop();
-        }
-        if (current == grid.get(grid.size()-1)) {
-
-            DFS = false;
-            DFSCompleted = true;
-            return true;
-        }
-
-        return false;
-    }
-
-    private class Cell { //inner class
-
+        int f = 999999;
+        int g,h;
+        Cell parent;
         boolean visited = false;
 
         //active walls of the Cell
@@ -289,6 +471,50 @@ public class Draw extends View {
             }
         }
 
+
+        private ArrayList<Cell> NonWalledNeighboursArrayAStar(){
+
+            ArrayList<Cell> returnArray = new ArrayList<>();
+            try{
+                Cell top = grid.get(getIndex(i,j-1));
+                if(wall[0] == false){
+                    returnArray.add(top);
+                }
+            }catch (ArrayIndexOutOfBoundsException  ignored){
+
+            }
+
+            //right Neighbour
+            try{
+                Cell right = grid.get(getIndex(i+1,j));
+                if(wall[1] == false){
+                    returnArray.add(right);
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+
+            }
+
+            //bottom Neighbour
+            try{
+                Cell bottom = grid.get(getIndex(i,j+1));
+                if(wall[2] == false){
+                    returnArray.add(bottom);
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+
+            }
+            //left Neighbour
+            try{
+
+                Cell left = grid.get(getIndex(i-1,j));
+                if(wall[3] == false){
+                    returnArray.add(left);
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+            }
+            return returnArray;
+        }
+
         @Nullable
         private Cell NonWalledNeighbours(){
 
@@ -333,6 +559,51 @@ public class Draw extends View {
             }
 
             return null;
+        }
+
+
+        private List<Cell> NonWalledNeighboursArray(){
+
+            //top Neighbour
+            try{
+                Cell top = grid.get(getIndex(i,j-1));
+                if(wall[0] == false){
+                    neibourArray.add(top);
+                }
+            }catch (ArrayIndexOutOfBoundsException  ignored){
+
+            }
+
+            //right Neighbour
+            try{
+                Cell right = grid.get(getIndex(i+1,j));
+                if(wall[1] == false){
+                    neibourArray.add(right);
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+
+            }
+
+            //bottom Neighbour
+            try{
+                Cell bottom = grid.get(getIndex(i,j+1));
+                if(wall[2] == false){
+                    neibourArray.add(bottom);
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+
+            }
+            //left Neighbour
+            try{
+
+                Cell left = grid.get(getIndex(i-1,j));
+                if(wall[3] == false){
+                    neibourArray.add(left);
+                }
+            }catch (ArrayIndexOutOfBoundsException ignored){
+            }
+
+            return neibourArray;
         }
 
         public Cell checkNeighbours(){
