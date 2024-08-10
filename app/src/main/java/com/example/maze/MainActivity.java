@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //button Ids
+        //Views Ids
         DrawView = findViewById(R.id.draw);
         GenerateBtn = findViewById(R.id.button);
         Stop = findViewById(R.id.Stop);

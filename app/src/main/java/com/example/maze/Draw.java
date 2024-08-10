@@ -36,7 +36,7 @@ public class Draw extends View {
     boolean DFS = false;
     boolean A_star = false;
     boolean firstSearch =  true;
-    long  delay = -99999999;
+    final long  delay = -999999999999999999L;
     Boolean DFSFirst = true;
     Paint pathPaint;
 
@@ -115,21 +115,25 @@ public class Draw extends View {
                 }
                 GridCreated = true;
             }
+            if(this.invalidate){
 
-            if (firstSearch) {
+                if (firstSearch) {
 //          GenerateMazeRecursiveBacktrack();
-                GenerateMazeKruskal();
-            }
-            if (DFS) {
-                this.DFS();
+                    GenerateMazeKruskal();
+                }
+                if (DFS) {
+                    this.DFS();
+                }
+
+                if(BFS){
+                    this.BFS();
+                }
+                if(A_star){
+                    this.A_star();
+                }
+
             }
 
-            if(BFS){
-                this.BFS();
-            }
-            if(A_star){
-                this.A_star();
-            }
 
 //        if (this.invalidate) {
 //            postInvalidateDelayed(delay);
@@ -168,7 +172,6 @@ public class Draw extends View {
                 for (int i = 0;i<grid.size();i++){
                     set.makeSet(grid.get(i));
                 }
-                System.out.println(set.itemsSize());
                 SetCreated = true;
             }
             //Step2-Getting random Cell and Random Neighbour
@@ -746,12 +749,20 @@ public class Draw extends View {
                 newGrid.add(temp);
             }
         }
-
         this.grid = newGrid; //copying the newGrid to actual grid
+
+        DisjointSet<Cell> temp = new DisjointSet<>();
+        for (int i = 0;i<grid.size();i++){
+            temp.makeSet(grid.get(i));
+        }
+        this.set  = temp;
+
+
         first = true;
         DFS = false;
         firstSearch = true;
-
+        this.SetCreated = true;
+        this.counter = 0;
         postInvalidateDelayed(delay);
     }
 }
