@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">Maze Runner</string>
+    <string-array name="spinner_items">
+        <item>kruskals Algorithm</item>
+        <item>Recursive Backtracker</item>
+    </string-array>
+
+
+    <string-array name="pathfind_items">
+        <item>A* Algorithm</item>
+        <item>Breadth First Search</item>
+        <item>Depth First Search</item>
+    </string-array>
 </resources>

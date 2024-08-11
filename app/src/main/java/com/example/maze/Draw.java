@@ -10,6 +10,8 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +27,8 @@ public class Draw extends View {
 
     int shrinkAmount = 10;
 
+    MutableLiveData<Boolean> change = new MutableLiveData<>();
+
     boolean BFSCompleted = false;
     boolean BFSFirst = true;
 
@@ -36,7 +40,7 @@ public class Draw extends View {
     boolean DFS = false;
     boolean A_star = false;
     boolean firstSearch =  true;
-    final long  delay = -999999999999999999L;
+    long delay = -999999999999999999L;
     Boolean DFSFirst = true;
     Paint pathPaint;
 
@@ -45,10 +49,11 @@ public class Draw extends View {
         Stack<Cell> stack;
         Queue<Cell> queue;
         int rows,cols;
-        int w = 50;
+        int w = 80;
         Paint paint;
         Canvas canvas;
         ArrayList<Cell> grid;
+        boolean kruskal = false;
         boolean isDrawing = false;
         PriorityQueue<Node> openSet;
         Handler handler;
@@ -57,6 +62,7 @@ public class Draw extends View {
         boolean GridCreated = false;
         boolean first = true;
         boolean SetCreated = false;
+        boolean Backtracker = false;
         DisjointSet<Cell> set;
         int counter = 0;
         boolean Running = true;
@@ -103,7 +109,6 @@ public class Draw extends View {
             if (!GridCreated) {
                 cols = getWidth() / w;
                 rows = getHeight() / w;
-                System.out.println(cols + " " + rows);
 
                 grid = new ArrayList<Cell>();
 
@@ -117,9 +122,11 @@ public class Draw extends View {
             }
             if(this.invalidate){
 
-                if (firstSearch) {
-//          GenerateMazeRecursiveBacktrack();
+                if (kruskal) {
                     GenerateMazeKruskal();
+                }
+                if (Backtracker){
+                    GenerateMazeRecursiveBacktrack();
                 }
                 if (DFS) {
                     this.DFS();
@@ -135,9 +142,6 @@ public class Draw extends View {
             }
 
 
-//        if (this.invalidate) {
-//            postInvalidateDelayed(delay);
-//        }
             if (DFSCompleted) {
                 for(Cell cell : stack){
 
@@ -160,6 +164,13 @@ public class Draw extends View {
             for (int i = 0;i<grid.size();i++){
                 grid.get(i).show();
             }
+        }
+        public void TriggerKruskal(){
+            this.GridCreated = false;
+            this.invalidate = true;
+            this.kruskal = true;
+            this.SetCreated = false;
+            postInvalidateDelayed(delay);
         }
         public void GenerateMazeKruskal(){
 
@@ -193,9 +204,9 @@ public class Draw extends View {
             }
             if(counter == grid.size()-1){
                 Running = false;
+                this.change.setValue(true);
             }
             postInvalidateDelayed(delay);
-
         }
         public void GenerateMazeRecursiveBacktrack(){
 
@@ -219,7 +230,17 @@ public class Draw extends View {
             else if(!stack.isEmpty()){
                 current = stack.pop();
             }
+            if (current == grid.get(0)) {
+                //maze generated because back on initial position
+                this.change.setValue(true);
+            }
 
+            postInvalidateDelayed(delay);
+        }
+        public void TriggerBacktracker(){
+            this.GridCreated = false;
+            this.invalidate = true;
+            this.Backtracker = true;
             postInvalidateDelayed(delay);
         }
 
@@ -356,6 +377,7 @@ public class Draw extends View {
 
             if(current == this.grid.get(this.grid.size()-1)){
                 traceBackPath();
+                A_star = false;
                 return true;
             }
 
@@ -721,6 +743,13 @@ public class Draw extends View {
         return randomIndex.nextInt(this.grid.size());
     }
 
+    public void changeSize(int size){
+        this.Reset();
+        this.w = size;
+        this.GridCreated = false;
+        invalidate();
+    }
+
     public void StartDrawing(){
         this.invalidate = true;
         postInvalidateDelayed(delay);
@@ -734,35 +763,37 @@ public class Draw extends View {
 
     public void Reset(){
 
-
         //emptying the stack
-
-        while(!this.stack.isEmpty()){
-            this.stack.pop();
-        }
-
-        //creating a new grid and assigning it to the current grid
-        ArrayList<Cell> newGrid = new ArrayList<Cell>();
-        for (int j = 0; j < rows; j++) {
-            for (int i = 0; i < cols; i++) {
-                Cell temp = new Cell(i, j);
-                newGrid.add(temp);
+        if(this.stack != null){
+            while(!this.stack.isEmpty()){
+                this.stack.pop();
             }
         }
-        this.grid = newGrid; //copying the newGrid to actual grid
-
-        DisjointSet<Cell> temp = new DisjointSet<>();
-        for (int i = 0;i<grid.size();i++){
-            temp.makeSet(grid.get(i));
+        if(this.grid != null){
+            ArrayList<Cell> newGrid = new ArrayList<Cell>();
+            for (int j = 0; j < rows; j++) {
+                for (int i = 0; i < cols; i++) {
+                    Cell temp = new Cell(i, j);
+                    newGrid.add(temp);
+                }
+            }
+            this.grid = newGrid; //copying the newGrid to actual grid
         }
-        this.set  = temp;
-
-
+        if(this.set != null){
+            DisjointSet<Cell> temp = new DisjointSet<>();
+            for (int i = 0;i<grid.size();i++){
+                temp.makeSet(grid.get(i));
+            }
+            this.set  = temp;
+        }
+        this.change.setValue(false);
         first = true;
         DFS = false;
         firstSearch = true;
         this.SetCreated = true;
         this.counter = 0;
+        this.kruskal = false;
+        this.Backtracker = false;
         postInvalidateDelayed(delay);
     }
 }
