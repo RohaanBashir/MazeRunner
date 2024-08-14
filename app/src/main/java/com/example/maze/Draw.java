@@ -28,6 +28,7 @@ public class Draw extends View {
     int shrinkAmount = 10;
 
     MutableLiveData<Boolean> change = new MutableLiveData<>();
+    boolean tracebackpath = false;
 
     boolean BFSCompleted = false;
     boolean BFSFirst = true;
@@ -200,12 +201,12 @@ public class Draw extends View {
                     set.union(current,next);
                     counter++;
                 }
+                if(counter == grid.size()-1){
+                    Running = false;
+                    this.change.setValue(true);
+                }
+            }
 
-            }
-            if(counter == grid.size()-1){
-                Running = false;
-                this.change.setValue(true);
-            }
             postInvalidateDelayed(delay);
         }
         public void GenerateMazeRecursiveBacktrack(){
@@ -241,6 +242,7 @@ public class Draw extends View {
             this.GridCreated = false;
             this.invalidate = true;
             this.Backtracker = true;
+            this.SetCreated = false;
             postInvalidateDelayed(delay);
         }
 
@@ -268,6 +270,14 @@ public class Draw extends View {
                 current.visited = true;
                 DFSFirst = false;
             }
+
+            if (current == grid.get(grid.size()-1)) {
+
+                DFS = false;
+                traceBackPath();
+                //DFSCompleted = true;
+                return true;
+            }
             //getting next cell based upon if they don't have wall between current and next
             Cell next = current.NonWalledNeighbours();
 
@@ -275,18 +285,12 @@ public class Draw extends View {
             if(next!=null){
                 stack.push(current);
                 next.visited = true;
+                next.parent = current;
                 current = next;
             }
             else if(!stack.isEmpty()){
                 current = stack.pop();
             }
-            if (current == grid.get(grid.size()-1)) {
-
-                DFS = false;
-                DFSCompleted = true;
-                return true;
-            }
-
             return false;
         }
 
@@ -300,7 +304,6 @@ public class Draw extends View {
                 while (!stack.isEmpty()) {
                     stack.pop();
                 }
-
                 current = grid.get(0);
                 current.visited = true;
                 queue.add(current);
@@ -312,15 +315,13 @@ public class Draw extends View {
                 return true;
             }
 
-            current = queue.poll();
-            stack.push(current);
-
             if (current == grid.get(grid.size() - 1)) {
                 // Goal cell found, trace back the path
                 traceBackPath();
                 return true;
             }
-
+            current = queue.poll();
+            stack.push(current);
             for (Cell neighbor : current.NonWalledNeighboursArray()) {
                 if (!neighbor.visited) {
                     neighbor.visited = true;
@@ -372,14 +373,13 @@ public class Draw extends View {
                 A_starFirst = false;
             }
 
-            current = openSet.poll().getCell();
-            g = current.g;
-
             if(current == this.grid.get(this.grid.size()-1)){
                 traceBackPath();
-                A_star = false;
                 return true;
             }
+
+            current = openSet.poll().getCell();
+            g = current.g;
 
             current.visited = true;
             canvas.drawRect(
@@ -439,6 +439,7 @@ public class Draw extends View {
 
             canvas.drawRect(grid.get(0).i*w, grid.get(0).j*w,
                     (grid.get(0).i*w)+w, (grid.get(0).j*w)+w, paint1); // start cell
+
         }
     }
     class Cell { //inner class
