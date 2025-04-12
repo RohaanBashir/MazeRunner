@@ -2,15 +2,15 @@
 
 An Android app for visualizing maze generation and pathfinding algorithms in real-time. This project helps users understand how algorithms like Kruskal's, Recursive Backtracking, A*, BFS, and DFS work through interactive animations.
 
-![Main Screen](screenshots/1.jpg)
-![Main Screen](screenshots/3.jpg)
+<img src="screenshots/1.jpg" width="400" />
+<img src="screenshots/2.jpg" width="400" />
 
 ## 📱 Features
 
 - 🏗️ **Maze Generation Algorithms**
   - Kruskal's Algorithm
   - Recursive Backtracking
-  ![Main Screen](screenshots/2.jpg)
+  <img src="screenshots/3.jpg" width="400" />
 
 - 🧭 **Pathfinding Algorithms**
   - A* (A-Star)
