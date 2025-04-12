@@ -172,9 +172,32 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/resetMaze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reset Maze"
+        android:visibility="invisible"
+        android:enabled="false"
+        app:layout_constraintBottom_toBottomOf="@+id/linearLayout2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/draw" />
+
+    <TextView
+        android:id="@+id/iterations"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nodes Visited: 0"
+        android:textSize="30dp"
+        app:layout_constraintBottom_toTopOf="@+id/status"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.161" />
 
 
-<!--    <Button-->
+    <!--    <Button-->
 <!--        android:id="@+id/path"-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->

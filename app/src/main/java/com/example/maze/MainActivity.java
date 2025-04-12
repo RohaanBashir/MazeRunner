@@ -29,7 +29,13 @@ public class MainActivity extends AppCompatActivity {
     TextView valueTextView;
     TextView status;
     Spinner pathFindingSpinner;
+
+    Button resetMaze;
     int pathAlgo = 0;
+
+    TextView iterations;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
         status = findViewById(R.id.status);
         path = findViewById(R.id.path);
         pathFindingSpinner = findViewById(R.id.pathfindingspinner);
+        resetMaze = findViewById(R.id.resetMaze);
+
+        TextView iterations = findViewById(R.id.iterations);
 
 
         //Path finding spinner code
@@ -193,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         Reset.setOnClickListener(view -> {
 
             status.setText("Maze generation");
@@ -219,10 +229,27 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+
+        DrawView.changeIterations.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                iterations.setText("Iterations: " + DrawView.iterations);
+            }
+        });
+
+
+        DrawView.changeNodesVisited.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                iterations.setText("Nodes Visited: " + DrawView.nodesVisited);
+            }
+        });
+
         DrawView.change.observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
                 if(DrawView.change.getValue() == true){
+
                     status.setText("Maze Generated!");
                     status.setTextColor(Color.GREEN);
                     isGenerated = true;
@@ -240,12 +267,38 @@ public class MainActivity extends AppCompatActivity {
                     mySeekBar.setVisibility(View.INVISIBLE);
                     mySeekBar.setEnabled(false);
 
+                    mySpinner.setVisibility(View.INVISIBLE);
+                    mySpinner.setEnabled(false);
+                }
+            }
+        });
+
+
+        DrawView.pathFound.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (DrawView.pathFound.getValue() == true) {
+                    status.setText("Path Found!");
+                    status.setTextColor(Color.GREEN);
+
+                    // Show only reset
+                    Reset.setEnabled(false);
+                    Reset.setVisibility(View.INVISIBLE);
+
+                    // Hide everything else
+                    path.setVisibility(View.INVISIBLE);
+                    pathFindingSpinner.setVisibility(View.INVISIBLE);
+                    Stop.setVisibility(View.INVISIBLE);
+                    GenerateBtn.setVisibility(View.INVISIBLE);
+                    mySeekBar.setVisibility(View.INVISIBLE);
+                    valueTextView.setVisibility(View.INVISIBLE);
+                    mySpinner.setVisibility(View.INVISIBLE);
                 }
             }
         });
 
         path.setOnClickListener(v->{
-
+            DrawView.iterations = -1;
             DrawView.firstSearch = false;
             if(pathAlgo == 0){
                 DrawView.TriggerA_star();
