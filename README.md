@@ -5,6 +5,7 @@ An Android app for visualizing maze generation and pathfinding algorithms in rea
 <div align="center">
   <img src="screenshots/1.jpg" width="200" />
   <img src="screenshots/2.jpg" width="200" />
+  <img src="screenshots/3.jpg" width="200" />
 </div>
 
 ## 📱 Features
@@ -35,10 +36,6 @@ An Android app for visualizing maze generation and pathfinding algorithms in rea
   - Status feedback during generation and pathfinding
   - SeekBar for selecting grid size
   - Spinners for selecting algorithms
-
-<div align="center">
-  <img src="screenshots/3.jpg" width="200" />
-</div>
 ---
 
 ## 🔧 Technologies Used
